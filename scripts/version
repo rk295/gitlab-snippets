@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+version="${GITHUB_REF_NAME:=}"
+
+if [[ -z "$version" ]]; then
+    version="$(git rev-parse HEAD)"
+fi
+
+echo "$version"

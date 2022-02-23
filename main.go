@@ -28,9 +28,24 @@ var (
 	debug       bool
 	description string
 	file        string
+	fileName    string
+	help        bool
 	host        string
 	title       string
 	visibility  string
+	version     bool
+	versionStr  string
+
+	printUsage = func() {
+		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
+		flag.PrintDefaults()
+		os.Exit(0)
+	}
+
+	printVersion = func() {
+		fmt.Println("version:", versionStr)
+		os.Exit(0)
+	}
 )
 
 func init() {
@@ -38,12 +53,23 @@ func init() {
 	flag.StringVarP(&description, "description", "d", "", "Description for the snippet")
 	flag.StringVarP(&visibility, "visibility", "v", "internal", "Visibility of the snippet. Possible values are: private, public, internal")
 	flag.StringVarP(&file, "file", "f", "", "File to read, defaults to STDIN")
+	flag.StringVar(&fileName, "filename", "-", "Filename to assign when reading STDIN")
 	flag.StringVarP(&host, "host", "h", defaultHost, "Host to connect to")
+	flag.BoolVar(&version, "version", false, "Print version info")
 	flag.BoolVar(&debug, "debug", false, "sets log level to debug")
+	flag.BoolVar(&help, "help", false, "")
 	flag.Parse()
 }
 
 func main() {
+
+	if help {
+		printUsage()
+	}
+
+	if version {
+		printVersion()
+	}
 
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
@@ -100,12 +126,12 @@ func main() {
 		panic(err)
 	}
 	defer req.Body.Close()
-	log.Printf("request made, response code: %v", resp.StatusCode)
 
 	if resp.StatusCode != http.StatusCreated {
 		b, err := io.ReadAll(resp.Body)
 		if err != nil {
-			log.Print("failed reading response body", err)
+			fmt.Println("failed reading response body", err)
+			os.Exit(1)
 		}
 		log.Print(string(b))
 		os.Exit(1)
@@ -150,7 +176,7 @@ func getContent() (string, string, error) {
 		if err != nil {
 			return "", "", err
 		}
-		return string(bytes), "-", nil
+		return string(bytes), fileName, nil
 	}
 
 	log.Print("no file given and nothing on stdin")
