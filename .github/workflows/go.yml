@@ -1,0 +1,31 @@
+name: Go
+
+on:
+  push:
+    branches: [master]
+    tags: ["*"]
+  pull_request:
+    branches: [master]
+
+jobs:
+  lint:
+    name: Golang-CI Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: golangci/golangci-lint-action@v2
+        with:
+          # must be specified without patch version
+          version: v1.29
+          skip-build-cache: true
+
+  build:
+    name: Go Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      - name: Build
+        run: make build
